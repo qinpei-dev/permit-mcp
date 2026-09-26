@@ -2,11 +2,17 @@
 
 ## Unreleased
 
-### v0.4 engineering acceptance (not released)
-- Added a fixed, separate stdio MCP `read_sample` service and a permit-gated real `tools/call` proof through `ControlChain`.
-- Required an explicit argument projection before an external control decision provider is called; caller-supplied descriptions are not sent to it. The full proposal digest still binds permits.
-- Added startup, timeout, protocol-error, approval, denial, replay, expiry, and argument-binding tests for the upstream path.
-- Documented the fixed scope and current security limits. No v0.4 tag or GitHub Release has been created.
+## [0.4.0] - 2026-09-27
+
+### Added
+- Extracted a reusable `ControlChain` for policy, optional decision provider, approval, one-time `ExecutionPermit`, and executor flow.
+- Added an explicit safe argument projection for external control decisions; caller-supplied descriptions are excluded from provider requests, while the complete proposal digest remains bound to each permit.
+- Added a separate repository-owned stdio MCP service with a fixed `read_sample` tool, called through a real permit-gated `tools/call`.
+
+### Tests and limits
+- 98 passed, 1 skipped locally on Windows; the skipped test requires Windows symbolic-link privileges. Python 3.11, 3.12, and 3.13 CI passed on the accepted implementation commit.
+- Covered upstream startup, timeout, protocol and tool errors, approval, denial, replay, expiry, and argument binding.
+- Validation covers only the fixed repository-owned stdio MCP service. There is no general MCP proxy or operating-system sandbox. The real JEV API was not revalidated for this release.
 
 ## [0.3.0] - 2026-09-25
 

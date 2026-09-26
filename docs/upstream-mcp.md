@@ -1,4 +1,4 @@
-# Upstream MCP proof (v0.4 work in progress)
+# Upstream MCP proof (v0.4.0)
 
 The repository includes one separate stdio MCP server, `src.upstream.sample_server`. Its only tool, `read_sample`, returns one of two fixed strings. `ReadSampleExecutor` launches that server with `sys.executable`, opens a real MCP `ClientSession`, initializes it, and sends `tools/call`. The executor is reached through the reusable `ControlChain`; the test does not call the Python tool function directly.
 

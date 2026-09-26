@@ -6,7 +6,7 @@
 
 一个面向 MCP Agent 的轻量级执行控制层，通过确定性策略、JEV 决策、人工审批和一次性 Execution Permit 控制真实工具执行。
 
-**版本状态：** v0.3.0 是最新已发布版本。源码中 v0.4 Milestone 1（可复用 `ControlChain`）和 Milestone 2（单个固定上游 MCP 调用）已实现，尚未发布。当前不支持通用 MCP Proxy 或任意第三方 MCP 服务。
+**版本状态：** v0.4.0 包含可复用的 `ControlChain`，以及对仓库内固定 `read_sample` 工具的一次 Permit 控制的上游 MCP 调用。当前不支持通用 MCP Proxy、任意第三方 MCP 服务或操作系统级沙箱。本次发布未重新验证真实 JEV API。
 
 ### Controlled Agent Showcase
 
@@ -33,7 +33,7 @@ Showcase 使用控制场景专用的离线决策 mock，针对临时沙箱内的
 
 JEV 是可选决策组件，不执行工具，也不能覆盖确定性 Policy。调用外部决策组件前，Policy 或 Controller 必须显式提供安全参数投影；缺少投影时执行链会安全失败。Permit 绑定完整 proposal 的摘要，默认一分钟过期，在 Executor 边界只能消费一次。
 
-v0.4 上游验证会启动仓库内独立的 stdio MCP 进程，并通过真实 `tools/call` 调用固定的 `read_sample` 工具。离线运行：`python -m examples.upstream_mcp_demo`。范围、故障处理与限制见[上游 MCP 验证说明](docs/upstream-mcp.md)。
+v0.4.0 上游验证会启动仓库内独立的 stdio MCP 进程，并通过真实 `tools/call` 调用固定的 `read_sample` 工具。离线运行：`python -m examples.upstream_mcp_demo`。范围、故障处理与限制见[上游 MCP 验证说明](docs/upstream-mcp.md)。
 
 ## Quick Start
 

@@ -6,7 +6,7 @@
 
 A lightweight execution-control layer for MCP agents with deterministic policies, JEV-backed decisions, human approval, and one-time execution permits.
 
-**Version status:** v0.3.0 is the latest published release. v0.4 Milestone 1 (reusable `ControlChain`) and Milestone 2 (one fixed upstream MCP call) are implemented in the unreleased source. There is no general MCP proxy or arbitrary third-party server support.
+**Version status:** v0.4.0 includes the reusable `ControlChain` and one permit-gated upstream MCP call to the fixed repository-owned `read_sample` tool. There is no general MCP proxy, arbitrary third-party server support, or operating-system sandbox. The real JEV API was not revalidated for this release.
 
 ### Controlled Agent Showcase
 
@@ -33,7 +33,7 @@ Policy `DENY` stops before JEV. Policy `REVIEW` waits for caller approval. `ALLO
 
 JEV is an optional decision provider. It does not execute tools or override deterministic policy. A policy must explicitly project safe arguments before a provider sees them; otherwise the control decision fails closed. Permits bind the complete proposal digest, expire after one minute by default, and are consumed once at the executor boundary.
 
-The v0.4 upstream proof starts a separate repository-owned stdio MCP process and makes a real `tools/call` for `read_sample` through the same chain. Run it offline with `python -m examples.upstream_mcp_demo`. See [Upstream MCP proof](docs/upstream-mcp.md) for scope, failure handling, and limits.
+The v0.4.0 upstream proof starts a separate repository-owned stdio MCP process and makes a real `tools/call` for `read_sample` through the same chain. Run it offline with `python -m examples.upstream_mcp_demo`. See [Upstream MCP proof](docs/upstream-mcp.md) for scope, failure handling, and limits.
 
 ## Quick Start
 
