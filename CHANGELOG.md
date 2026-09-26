@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### v0.4 engineering acceptance (not released)
+- Added a fixed, separate stdio MCP `read_sample` service and a permit-gated real `tools/call` proof through `ControlChain`.
+- Required an explicit argument projection before an external control decision provider is called; caller-supplied descriptions are not sent to it. The full proposal digest still binds permits.
+- Added startup, timeout, protocol-error, approval, denial, replay, expiry, and argument-binding tests for the upstream path.
+- Documented the fixed scope and current security limits. No v0.4 tag or GitHub Release has been created.
+
 ## [0.3.0] - 2026-09-25
 
 ### Added

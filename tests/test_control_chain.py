@@ -1,7 +1,9 @@
 """Reusable control chain behavior independent of the local agent planner."""
 
 import asyncio
+import json
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 import pytest
 
@@ -62,6 +64,45 @@ def test_generic_tool_and_provider_disabled_pass_execute():
     assert executor.calls == [("remote.search", {"query": "hello"})]
     with pytest.raises(PermitError, match="invalid or does not match"):
         permits.consume(proposed, result.permit)
+
+
+def test_generic_policy_requires_explicit_provider_argument_view():
+    provider = ProviderSpy()
+    controller = DecisionController(provider, GenericPolicy())
+    with pytest.raises(ValueError, match="explicit argument view"):
+        asyncio.run(controller.decide(action(arguments={"query": "hello", "secret": "private-value"})))
+    assert provider.calls == 0
+
+
+def test_generic_argument_projection_keeps_full_permit_digest():
+    class RecordingProvider:
+        task = None
+
+        async def decide(self, task, options):
+            self.task = task
+            return SimpleNamespace(decision="allow", confidence=0.9, reason="approved")
+
+    class ProjectingPolicy(GenericPolicy):
+        @staticmethod
+        def decision_arguments(proposal):
+            return {"query": proposal.arguments["query"]}
+
+    provider = RecordingProvider()
+    permits = ExecutionPermitAuthority()
+    executor = GenericExecutor(permits)
+    chain = ControlChain(DecisionController(provider, ProjectingPolicy()), permits, executor)
+    original = action(arguments={"query": "hello", "secret": "private-value"}).model_copy(
+        update={"description": "caller description private-value"}
+    )
+    result = asyncio.run(chain.run(original))
+    context = json.loads(provider.task.split(". ", 1)[1])
+    assert context["arguments"] == {"query": "hello"}
+    assert "private-value" not in provider.task
+    assert result.status == "success"
+    assert result.permit.proposal_digest == original.digest()
+    assert result.decision.proposal_digest == original.digest()
+    redacted = original.model_copy(update={"arguments": {"query": "hello"}})
+    assert result.permit.proposal_digest != redacted.digest()
 
 
 @pytest.mark.parametrize("tool,outcome", [

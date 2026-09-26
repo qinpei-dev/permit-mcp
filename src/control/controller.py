@@ -32,8 +32,10 @@ class DecisionController:
         self.engine = engine
         self.policy = policy
         self.minimum_confidence = minimum_confidence
-        self.argument_view = argument_view or getattr(
-            policy, "decision_arguments", lambda proposal: dict(proposal.arguments)
+        # An external provider may only receive arguments through an explicit
+        # view. Never infer that a generic policy permits disclosure.
+        self.argument_view = argument_view if argument_view is not None else getattr(
+            policy, "decision_arguments", None
         )
 
     async def decide(self, proposal: ActionProposal) -> tuple[PolicyResult, ControlDecision]:
@@ -65,11 +67,15 @@ class DecisionController:
                 source="policy",
             )
 
+        if self.argument_view is None:
+            raise ValueError("an explicit argument view is required for an external decision provider")
+        provider_arguments = self.argument_view(proposal)
+        if not isinstance(provider_arguments, dict):
+            raise TypeError("decision argument view must return a dictionary")
         context = {
             "action_id": proposal.action_id,
             "tool": proposal.tool,
-            "arguments": self.argument_view(proposal),
-            "description": proposal.description,
+            "arguments": provider_arguments,
             "system_risk_context": policy_result.risk_context,
         }
         task = "Decide whether this proposed local tool action may execute. " + json.dumps(

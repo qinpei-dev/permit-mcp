@@ -18,6 +18,8 @@ MCP Client / HTTP caller
 
 JEV does not execute tools and does not replace the Agent. The `allow`, `review`, and `deny` outcomes are this application's interpretation of a TypeSafe Choice result, not a separate TypeSafe Gate primitive. The deterministic policy runs first and may deny or require review without calling a provider. With no provider, policy `PASS` permits execution. The legacy skill-routing mock is disabled for control in the shared adapter composition.
 
+Before contacting an external provider, the policy or controller must supply an explicit safe argument projection. With no projection, the decision fails closed. The sandbox policy omits `write_file` content and sends its length instead. Caller-supplied descriptions are not sent to the provider. The permit digest still covers the unredacted complete proposal. The separate fixed upstream MCP proof is documented in [Upstream MCP proof](upstream-mcp.md).
+
 The v0.2.1 `jev_decide`, `agent_run`, and `list_skills` tools remain available for compatibility. The new controlled path is exposed through `controlled_agent_run` and `approve_action`; both MCP and HTTP adapters call the same `ControlledAgentRunner` service.
 
 ## Action lifecycle

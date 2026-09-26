@@ -6,6 +6,8 @@
 
 一个面向 MCP Agent 的轻量级执行控制层，通过确定性策略、JEV 决策、人工审批和一次性 Execution Permit 控制真实工具执行。
 
+**版本状态：** v0.3.0 是最新已发布版本。源码中 v0.4 Milestone 1（可复用 `ControlChain`）和 Milestone 2（单个固定上游 MCP 调用）已实现，尚未发布。当前不支持通用 MCP Proxy 或任意第三方 MCP 服务。
+
 ### Controlled Agent Showcase
 
 <!-- 视觉占位：可靠录制 GIF 后可替换这段真实终端输出。 -->
@@ -29,6 +31,10 @@ Showcase 使用控制场景专用的离线决策 mock，针对临时沙箱内的
 
 策略 `DENY` 在 JEV 前阻止操作；策略 `REVIEW` 等待调用方批准；`ALLOW` 获取一次性 Permit。三种结果是本项目对 TypeSafe Choice 的应用层解释，并非 TypeSafe 独立的 Gate primitive。沙箱限制和机器可读 Trace 见[受控 Agent 说明](docs/controlled-agent.md)。
 
+JEV 是可选决策组件，不执行工具，也不能覆盖确定性 Policy。调用外部决策组件前，Policy 或 Controller 必须显式提供安全参数投影；缺少投影时执行链会安全失败。Permit 绑定完整 proposal 的摘要，默认一分钟过期，在 Executor 边界只能消费一次。
+
+v0.4 上游验证会启动仓库内独立的 stdio MCP 进程，并通过真实 `tools/call` 调用固定的 `read_sample` 工具。离线运行：`python -m examples.upstream_mcp_demo`。范围、故障处理与限制见[上游 MCP 验证说明](docs/upstream-mcp.md)。
+
 ## Quick Start
 
 需要 Python 3.11 或更新版本。克隆 [PermitMCP](https://github.com/qinpei-dev/permit-mcp) 后，在仓库根目录运行：
@@ -38,6 +44,8 @@ git clone https://github.com/qinpei-dev/permit-mcp.git
 cd permit-mcp
 pip install -r requirements.txt
 python -m examples.showcase
+python -m examples.upstream_mcp_demo
+python -m pytest -q
 ```
 
 MCP 配置与可选的真实 JEV API 见下方 [MCP](#mcp)；旧版 `agent_run` 技能流程继续保留。
@@ -81,7 +89,9 @@ MCP 客户端提供任务和允许的选项。JEV 返回选择，系统在路由
 
 ## 架构
 
-![PermitMCP 架构图](docs/images/architecture.png)
+下图展示早期决策路由路径；Permit 控制的执行路径见上文和[受控 Agent 说明](docs/controlled-agent.md)。
+
+![PermitMCP 决策路由图](docs/images/architecture.png)
 
 MCP 负责通信；JEV 根据客户端允许的选项作出结构化决策；Skill Router 找到已注册的技能；Skill Executor 运行相应的本地工作流。
 
@@ -224,7 +234,7 @@ curl -X POST http://127.0.0.1:8000/api/v1/agent/run \
 
 ## 路线图
 
-最新发布版本为 [v0.3.0](https://github.com/qinpei-dev/permit-mcp/releases/tag/v0.3.0)，在 MCP 决策层、本地模拟工作流、HTTP API 和离线决策路由评估基础上增加受控 Agent 执行循环。未来可能增加更多 MCP host 配置示例，但尚未承诺交付日期。
+最新已发布版本为 [v0.3.0](https://github.com/qinpei-dev/permit-mcp/releases/tag/v0.3.0)。尚未发布的 v0.4 源码增加可复用执行控制链，并验证一次固定的上游 stdio MCP 调用。未来可能增加更多 MCP host 配置示例，但尚未承诺交付日期。
 
 ## Docker
 

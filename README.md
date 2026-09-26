@@ -6,6 +6,8 @@
 
 A lightweight execution-control layer for MCP agents with deterministic policies, JEV-backed decisions, human approval, and one-time execution permits.
 
+**Version status:** v0.3.0 is the latest published release. v0.4 Milestone 1 (reusable `ControlChain`) and Milestone 2 (one fixed upstream MCP call) are implemented in the unreleased source. There is no general MCP proxy or arbitrary third-party server support.
+
 ### Controlled Agent Showcase
 
 <!-- Visual slot: replace this verified terminal capture with a GIF when available. -->
@@ -25,9 +27,13 @@ The showcase uses real sandbox file tools and a control-specific offline decisio
 
 ### Execution path
 
-`Agent proposal → ControlChain (deterministic policy → optional decision provider → ExecutionPermit → executor) → Observation`
+`ActionProposal → ControlChain (deterministic policy → optional decision provider → ExecutionPermit → executor) → ToolResult`
 
 Policy `DENY` stops before JEV. Policy `REVIEW` waits for caller approval. `ALLOW` receives a one-use permit. These outcomes are this project's application-layer interpretation of TypeSafe Choice, not a separate TypeSafe Gate primitive. See [Controlled Agent](docs/controlled-agent.md) for sandbox limits and the machine-readable trace.
+
+JEV is an optional decision provider. It does not execute tools or override deterministic policy. A policy must explicitly project safe arguments before a provider sees them; otherwise the control decision fails closed. Permits bind the complete proposal digest, expire after one minute by default, and are consumed once at the executor boundary.
+
+The v0.4 upstream proof starts a separate repository-owned stdio MCP process and makes a real `tools/call` for `read_sample` through the same chain. Run it offline with `python -m examples.upstream_mcp_demo`. See [Upstream MCP proof](docs/upstream-mcp.md) for scope, failure handling, and limits.
 
 ## Quick Start
 
@@ -38,6 +44,8 @@ git clone https://github.com/qinpei-dev/permit-mcp.git
 cd permit-mcp
 pip install -r requirements.txt
 python -m examples.showcase
+python -m examples.upstream_mcp_demo
+python -m pytest -q
 ```
 
 For MCP setup and the optional real JEV API, see [MCP](#mcp). The `agent_run` skill workflow remains available.
@@ -81,7 +89,9 @@ The MCP client provides the task and allowed choices. JEV returns a choice that 
 
 ## Architecture
 
-![PermitMCP architecture diagram](docs/images/architecture.png)
+The following diagram shows the earlier decision-routing path; the permit-gated execution path is described above and in [Controlled Agent](docs/controlled-agent.md).
+
+![PermitMCP decision-routing diagram](docs/images/architecture.png)
 
 MCP handles communication. JEV makes a structured decision from the client's allowed choices. The Skill Router selects the registered skill, and the executor runs its local workflow.
 
@@ -220,7 +230,7 @@ See the [Decision Routing Evaluation](benchmark/results.md). Run `python benchma
 
 ## Roadmap
 
-The latest release is [v0.3.0](https://github.com/qinpei-dev/permit-mcp/releases/tag/v0.3.0). It adds the controlled Agent execution loop to the MCP decision layer, local demo workflows, HTTP API, and offline decision-routing evaluation. Possible future work includes more MCP host examples; no delivery dates are committed.
+The latest published release is [v0.3.0](https://github.com/qinpei-dev/permit-mcp/releases/tag/v0.3.0). The unreleased v0.4 work adds a reusable control chain and validates one fixed upstream stdio MCP call. Possible future work includes more MCP host examples; no delivery dates are committed.
 
 ## Docker
 
@@ -236,6 +246,7 @@ The API is available at `http://localhost:8000`. Docker Compose binds the host p
 - Keep `.env` and any MCP host configuration containing a key private.
 - The HTTP API has no authentication. Keep it on a trusted local interface when using a real key; the included Compose configuration binds it to localhost.
 - Real JEV requests go directly from your server to `https://api.typesafe.ai/v1/systemone` over HTTPS.
+- The local path policy is not operating-system isolation. Approval and permits are in memory, and the upstream sample is not a production MCP proxy.
 
 ## Contributing
 
