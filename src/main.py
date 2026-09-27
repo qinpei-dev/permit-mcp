@@ -8,7 +8,7 @@ def create_app() -> FastAPI:
     client = JEVClient.from_env()
     app = FastAPI(
         title="PermitMCP",
-        version="0.3.0",
+        version="0.4.1",
         description="A JEV-powered decision/control layer for MCP-compatible AI Agents.",
     )
     app.include_router(build_router(DecisionEngine(client)))

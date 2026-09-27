@@ -1,6 +1,9 @@
 services:
   permit-mcp:
     build: .
+    environment:
+      PERMITMCP_EXECUTION_TOKEN: ${PERMITMCP_EXECUTION_TOKEN:-}
+      PERMITMCP_APPROVAL_TOKEN: ${PERMITMCP_APPROVAL_TOKEN:-}
     ports:
       - "127.0.0.1:8000:8000"
     healthcheck:

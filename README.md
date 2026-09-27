@@ -204,15 +204,16 @@ For the reasoning behind these examples, read [Decision Routing Examples](docs/u
 
 ### HTTP API example
 
-With the API running locally, send a task:
+Set two different, high-entropy tokens in your private `.env` as `PERMITMCP_EXECUTION_TOKEN` and `PERMITMCP_APPROVAL_TOKEN`. Both are required; an absent token or identical values disable all protected HTTP endpoints. Give the execution token only to the caller that runs tasks. Keep the approval token with a separate, trusted operator; never give it to an Agent. With the API running locally, send a task:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/v1/agent/run \
+  -H "Authorization: Bearer $PERMITMCP_EXECUTION_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"task":"帮我分析这个招聘岗位"}'
 ```
 
-In mock mode, the response contains the selected skill and execution result. The service also provides:
+In mock mode, the response contains the selected skill and execution result. All POST endpoints require the execution token except `/api/v1/controlled-agent/{run_id}/approve`, which requires the approval token. `/health` stays public. The service also provides:
 
 | Method | Path | Purpose |
 | --- | --- | --- |
@@ -228,9 +229,9 @@ In mock mode, the response contains the selected skill and execution result. The
 
 See the [Decision Routing Evaluation](benchmark/results.md). Run `python benchmark/run_benchmark.py` to regenerate it locally. The 10 example tasks test the decision routing flow, example task matching, confidence, and local demo execution for career, coding, research, and writing skills. The decision backend is a deterministic local mock; its latency does not represent real API latency or LLM generation speed. The evaluation makes no performance or cost claim. No paid model or external research service is called.
 
-## Roadmap
+## Release status
 
-The latest published release is [v0.3.0](https://github.com/qinpei-dev/permit-mcp/releases/tag/v0.3.0). The unreleased v0.4 work adds a reusable control chain and validates one fixed upstream stdio MCP call. Possible future work includes more MCP host examples; no delivery dates are committed.
+Version 0.4 includes the reusable control chain and a fixed upstream stdio MCP example. Version 0.4.1 adds HTTP authentication and corrects the API version metadata.
 
 ## Docker
 
@@ -238,13 +239,14 @@ The latest published release is [v0.3.0](https://github.com/qinpei-dev/permit-mc
 docker compose up --build
 ```
 
-The API is available at `http://localhost:8000`. Docker Compose binds the host port to `127.0.0.1`; mock mode is the default.
+The API is available at `http://localhost:8000`. Docker Compose binds the host port to `127.0.0.1`; mock mode is the default. Put both token variables in your private `.env`; Compose forwards them to the container. For direct Docker use, run `docker build -t permit-mcp:0.4.1 .` and `docker run -p 127.0.0.1:8000:8000 --env-file .env permit-mcp:0.4.1`. The Dockerfile listens on `0.0.0.0` *inside the container* so Compose's port forwarding works; `docker run -p 8000:8000` publishes to all host interfaces. For direct Uvicorn startup, use `python -m uvicorn src.main:app --host 127.0.0.1 --port 8000` with both token variables set in the process environment.
 
 ## Security and deployment
 
 - Use your own JEV API key. The project has no shared credentials or quota.
 - Keep `.env` and any MCP host configuration containing a key private.
-- The HTTP API has no authentication. Keep it on a trusted local interface when using a real key; the included Compose configuration binds it to localhost.
+- Protected HTTP endpoints use separate Bearer tokens for execution and approval. This is a two-role shared-secret boundary, not a multi-user identity system or proof that a human reviewed an action. A holder of the approval token can approve a matching pending action; `run_id` and `action_id` alone grant no permission. Rotate exposed tokens and use TLS and an appropriate access gateway for remote deployments.
+- Keep the approval token out of Agent prompts, tools, logs, and MCP client configuration. The stdio MCP server has a separate local-process trust boundary and is not changed by HTTP authentication; launch it only for trusted local clients.
 - Real JEV requests go directly from your server to `https://api.typesafe.ai/v1/systemone` over HTTPS.
 - The local path policy is not operating-system isolation. Approval and permits are in memory, and the upstream sample is not a production MCP proxy.
 

@@ -73,19 +73,24 @@ def test_mcp_approval_resumes_same_reviewed_action(tmp_path):
     assert "Adapter Demo" in (output / "summary.md").read_text(encoding="utf-8")
 
 
-def test_http_controlled_run_uses_real_executor(tmp_path):
+def test_http_controlled_run_uses_real_executor(tmp_path, monkeypatch):
+    monkeypatch.setenv("PERMITMCP_EXECUTION_TOKEN", "test-execution-only")
+    monkeypatch.setenv("PERMITMCP_APPROVAL_TOKEN", "test-approval-only")
     readme(tmp_path)
     app = FastAPI()
     app.include_router(build_router(DecisionEngine(AllowClient()), sandbox_root=tmp_path))
     response = TestClient(app).post(
-        "/api/v1/controlled-agent/run", json={"task": "summarize README", "max_steps": 5}
+        "/api/v1/controlled-agent/run", json={"task": "summarize README", "max_steps": 5},
+        headers={"Authorization": "Bearer test-execution-only"},
     )
     assert response.status_code == 200
     assert response.json()["status"] == "completed"
     assert (tmp_path / "output" / "summary.md").exists()
 
 
-def test_http_approval_and_invalid_requests(tmp_path):
+def test_http_approval_and_invalid_requests(tmp_path, monkeypatch):
+    monkeypatch.setenv("PERMITMCP_EXECUTION_TOKEN", "test-execution-only")
+    monkeypatch.setenv("PERMITMCP_APPROVAL_TOKEN", "test-approval-only")
     readme(tmp_path)
     output = tmp_path / "output"
     output.mkdir()
@@ -93,6 +98,7 @@ def test_http_approval_and_invalid_requests(tmp_path):
     app = FastAPI()
     app.include_router(build_router(DecisionEngine(AllowClient()), sandbox_root=tmp_path))
     client = TestClient(app)
+    client.headers.update({"Authorization": "Bearer test-execution-only"})
     pending_response = client.post(
         "/api/v1/controlled-agent/run", json={"task": "summarize README", "max_steps": 5}
     )
@@ -100,6 +106,12 @@ def test_http_approval_and_invalid_requests(tmp_path):
     assert pending_response.status_code == 200
     assert pending["status"] == "approval_required"
     assert (output / "summary.md").read_text(encoding="utf-8") == "before"
+    assert client.post(
+        f"/api/v1/controlled-agent/{pending['run_id']}/approve",
+        json={"action_id": pending["pending_action"]["action_id"]},
+    ).status_code == 401
+    assert (output / "summary.md").read_text(encoding="utf-8") == "before"
+    client.headers.update({"Authorization": "Bearer test-approval-only"})
     assert client.post(
         "/api/v1/controlled-agent/wrong-run/approve",
         json={"action_id": pending["pending_action"]["action_id"]},
@@ -114,9 +126,11 @@ def test_http_approval_and_invalid_requests(tmp_path):
         f"/api/v1/controlled-agent/{pending['run_id']}/approve",
         json={"action_id": pending["pending_action"]["action_id"]},
     ).status_code == 409
+    client.headers.update({"Authorization": "Bearer test-execution-only"})
     assert client.post(
         "/api/v1/controlled-agent/run", json={"task": " ", "max_steps": 0}
     ).status_code == 422
+    client.headers.update({"Authorization": "Bearer test-approval-only"})
     assert client.post(
         f"/api/v1/controlled-agent/{pending['run_id']}/approve", json={"action_id": "wrong"}
     ).status_code == 409

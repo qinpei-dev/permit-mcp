@@ -208,15 +208,16 @@ python -m examples.real_jev_demo
 
 ### HTTP API 示例
 
-本地 API 启动后，可以发送任务：
+先在私有 `.env` 中设置两个不同的高熵凭证：`PERMITMCP_EXECUTION_TOKEN` 和 `PERMITMCP_APPROVAL_TOKEN`。两者缺失或相同时，受保护的 HTTP 接口均拒绝请求。执行凭证仅交给任务调用方；审批凭证由独立可信操作人员保管，切勿提供给 Agent。本地 API 启动后，可以发送任务：
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/v1/agent/run \
+  -H "Authorization: Bearer $PERMITMCP_EXECUTION_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"task":"帮我分析这个招聘岗位"}'
 ```
 
-在 mock 模式下，响应包含选中的技能和执行结果。服务还提供：
+在 mock 模式下，响应包含选中的技能和执行结果。除 `/api/v1/controlled-agent/{run_id}/approve` 使用审批凭证外，所有 POST 接口使用执行凭证；`/health` 保持公开。服务还提供：
 
 | 方法 | 路径 | 用途 |
 | --- | --- | --- |
@@ -232,9 +233,9 @@ curl -X POST http://127.0.0.1:8000/api/v1/agent/run \
 
 评估结果见 [Decision Routing Evaluation](benchmark/results.md)。运行 `python benchmark/run_benchmark.py` 可在本地重新生成。10 个示例任务覆盖职业、编程、研究和写作技能的决策路由流程、示例任务匹配、置信度及本地演示执行。决策后端是确定性的本地 mock；其延迟不能代表真实 API 的延迟或 LLM 生成速度。这项评估不对性能或成本作出结论，也不会调用付费模型或外部研究服务。
 
-## 路线图
+## 版本状态
 
-最新已发布版本为 [v0.3.0](https://github.com/qinpei-dev/permit-mcp/releases/tag/v0.3.0)。尚未发布的 v0.4 源码增加可复用执行控制链，并验证一次固定的上游 stdio MCP 调用。未来可能增加更多 MCP host 配置示例，但尚未承诺交付日期。
+v0.4 包含可复用控制链和固定上游 stdio MCP 示例。v0.4.1 增加 HTTP 身份认证，并修正 API 版本元数据。
 
 ## Docker
 
@@ -242,13 +243,14 @@ curl -X POST http://127.0.0.1:8000/api/v1/agent/run \
 docker compose up --build
 ```
 
-API 位于 `http://localhost:8000`。Docker Compose 将主机端口绑定到 `127.0.0.1`，默认使用 mock 模式。
+API 位于 `http://localhost:8000`。Docker Compose 将宿主机端口绑定到 `127.0.0.1`，默认使用 mock 模式。在私有 `.env` 中设置两个凭证，Compose 会传入容器。直接运行容器可先执行 `docker build -t permit-mcp:0.4.1 .`，再执行 `docker run -p 127.0.0.1:8000:8000 --env-file .env permit-mcp:0.4.1`。Dockerfile 在容器内部监听 `0.0.0.0` 以便 Compose 转发；`docker run -p 8000:8000` 会在宿主机所有接口发布端口。直接启动时，在进程环境设置两个凭证并执行 `python -m uvicorn src.main:app --host 127.0.0.1 --port 8000`。
 
 ## 安全与部署
 
 - 使用你自己的 JEV API key；项目没有共享凭据或额度。
 - 对 `.env` 及含有 key 的 MCP host 配置保密。
-- HTTP API 没有身份验证。使用真实 key 时，应将其限制在可信的本地接口；项目自带的 Compose 配置将其绑定到 localhost。
+- HTTP 执行和审批使用不同的 Bearer 凭证。这只是两个角色的共享密钥边界，不是完整的多用户身份系统，也不能证明真人已审核。持有审批凭证者可批准匹配的待审 Action；仅持有 `run_id`、`action_id` 不具备审批权限。远程部署需要 TLS 和适当的访问网关。
+- 不要把审批凭证提供给 Agent、MCP 客户端、日志或提示词。stdio MCP 采用独立的本地进程信任边界，HTTP 认证不改变其功能；仅供可信本地客户端启动。
 - 真实 JEV 请求会从你的服务器通过 HTTPS 直接发送至 `https://api.typesafe.ai/v1/systemone`。
 
 ## Contributing

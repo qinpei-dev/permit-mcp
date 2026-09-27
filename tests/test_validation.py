@@ -69,14 +69,18 @@ def test_decision_engine_rejects_choice_outside_allowed_options():
         ("/api/v1/agent/run", {"task": "task"}),
     ],
 )
-def test_http_api_returns_502_for_invalid_decision(path, payload):
-    response = TestClient(make_app(InvalidDecisionClient())).post(path, json=payload)
+def test_http_api_returns_502_for_invalid_decision(path, payload, monkeypatch):
+    monkeypatch.setenv("PERMITMCP_EXECUTION_TOKEN", "test-execution-only")
+    monkeypatch.setenv("PERMITMCP_APPROVAL_TOKEN", "test-approval-only")
+    response = TestClient(make_app(InvalidDecisionClient())).post(path, json=payload, headers={"Authorization": "Bearer test-execution-only"})
     assert response.status_code == 502
 
 
-def test_http_api_rejects_blank_options_with_422():
+def test_http_api_rejects_blank_options_with_422(monkeypatch):
+    monkeypatch.setenv("PERMITMCP_EXECUTION_TOKEN", "test-execution-only")
+    monkeypatch.setenv("PERMITMCP_APPROVAL_TOKEN", "test-approval-only")
     response = TestClient(make_app(MockJEVClient())).post(
-        "/decide", json={"task": "task", "options": [" "]}
+        "/decide", json={"task": "task", "options": [" "]}, headers={"Authorization": "Bearer test-execution-only"}
     )
     assert response.status_code == 422
 
@@ -92,8 +96,10 @@ def test_mcp_tool_rejects_blank_input():
         asyncio.run(server.call_tool("jev_decide", {"task": " ", "options": ["allow"]}))
 
 
-def test_skill_route_includes_registered_research_skill():
-    response = TestClient(make_app(MockJEVClient())).post("/route/skill", json={"task": "调研 RAG 方案"})
+def test_skill_route_includes_registered_research_skill(monkeypatch):
+    monkeypatch.setenv("PERMITMCP_EXECUTION_TOKEN", "test-execution-only")
+    monkeypatch.setenv("PERMITMCP_APPROVAL_TOKEN", "test-approval-only")
+    response = TestClient(make_app(MockJEVClient())).post("/route/skill", json={"task": "调研 RAG 方案"}, headers={"Authorization": "Bearer test-execution-only"})
     assert response.status_code == 200
     assert response.json()["skill"] == "research_skill"
 

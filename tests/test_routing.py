@@ -65,10 +65,12 @@ def test_research_decision_executes_mock_skill():
     }
 
 
-def test_agent_run_api_decides_and_executes_skill():
+def test_agent_run_api_decides_and_executes_skill(monkeypatch):
+    monkeypatch.setenv("PERMITMCP_EXECUTION_TOKEN", "test-execution-only")
+    monkeypatch.setenv("PERMITMCP_APPROVAL_TOKEN", "test-approval-only")
     app = FastAPI()
     app.include_router(build_router(DecisionEngine(MockJEVClient())))
-    response = TestClient(app).post("/api/v1/agent/run", json={"task": "帮我分析这个招聘岗位"})
+    response = TestClient(app).post("/api/v1/agent/run", json={"task": "帮我分析这个招聘岗位"}, headers={"Authorization": "Bearer test-execution-only"})
     assert response.status_code == 200
     assert response.json() == {
         "decision": {"skill": "career_skill", "confidence": 0.91},
