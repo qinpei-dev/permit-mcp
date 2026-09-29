@@ -3,7 +3,7 @@
 PermitMCP 通过本机所有者选定的一个 stdio 服务连接外部工具。安装命令：
 
 ```bash
-python -m pip install permit-mcp==0.5.0
+python -m pip install "git+https://github.com/qinpei-dev/permit-mcp.git@v0.5.0"
 python -m pip install mcp-server-time==2026.8.18
 ```
 

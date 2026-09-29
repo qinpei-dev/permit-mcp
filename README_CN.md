@@ -2,7 +2,7 @@
 
 ## v0.5.0：连接外部 MCP 服务
 
-在仓库目录运行 `python -m pip install permit-mcp==0.5.0` 后，可从其他目录启动 `permit-mcp`。仅由本机服务所有者设置 `PERMITMCP_UPSTREAM_CONFIG`（可信 JSON 文件路径）及独立的 `PERMITMCP_UPSTREAM_APPROVAL_TOKEN` 时，才会启用 `upstream_tools`、`upstream_call` 和 `upstream_approve`。客户端不能指定上游可执行程序。完整第三方示例、策略、审批流程、测试步骤与限制见[中文集成指南](docs/external-upstream-cn.md)。旧的本地示例仍可运行。
+安装 GitHub 标签源码：`python -m pip install "git+https://github.com/qinpei-dev/permit-mcp.git@v0.5.0"` 后，可从其他目录启动 `permit-mcp`。仅由本机服务所有者设置 `PERMITMCP_UPSTREAM_CONFIG`（可信 JSON 文件路径）及独立的 `PERMITMCP_UPSTREAM_APPROVAL_TOKEN` 时，才会启用 `upstream_tools`、`upstream_call` 和 `upstream_approve`。客户端不能指定上游可执行程序。完整第三方示例、策略、审批流程、测试步骤与限制见[中文集成指南](docs/external-upstream-cn.md)。旧的本地示例仍可运行。
 
 该上游路径使用确定性策略，不需要 JEV 密钥。原有决策工具在缺少 `JEV_API_KEY` 时仍使用本地 mock；真实 TypeSafe 请求需自备密钥及额度。PermitMCP 不提供共享密钥或额度。外部 MCP 集成已通过本地独立服务验证。
 

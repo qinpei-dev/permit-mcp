@@ -4,7 +4,7 @@
 
 ## v0.5.0: configured upstream MCP
 
-Install from this checkout with `python -m pip install permit-mcp==0.5.0`, then run `permit-mcp` from any directory. The new `upstream_tools`, `upstream_call`, and `upstream_approve` MCP tools appear only when the server operator sets `PERMITMCP_UPSTREAM_CONFIG` to a trusted local JSON file and `PERMITMCP_UPSTREAM_APPROVAL_TOKEN` to a separate private secret. The client cannot choose the upstream executable. See [the integration guide](docs/external-upstream.md) for a complete third-party example, policy rules, approval flow, limits, and test command. The older local demos remain available.
+Install the tagged source with `python -m pip install "git+https://github.com/qinpei-dev/permit-mcp.git@v0.5.0"`, then run `permit-mcp` from any directory. The new `upstream_tools`, `upstream_call`, and `upstream_approve` MCP tools appear only when the server operator sets `PERMITMCP_UPSTREAM_CONFIG` to a trusted local JSON file and `PERMITMCP_UPSTREAM_APPROVAL_TOKEN` to a separate private secret. The client cannot choose the upstream executable. See [the integration guide](docs/external-upstream.md) for a complete third-party example, policy rules, approval flow, limits, and test command. The older local demos remain available.
 
 No JEV key is needed for configured upstream calls: deterministic policy decides `allow`, `review`, or `deny`. The original decision tools still use the local mock without `JEV_API_KEY`; configure your own key for real TypeSafe requests. PermitMCP does not provide shared keys or quota. The upstream integration was validated locally with an independent MCP server.
 

@@ -7,7 +7,7 @@ This path controls selected tools from one trusted local stdio server. It is a b
 Use Python 3.11 or later:
 
 ```bash
-python -m pip install permit-mcp==0.5.0
+python -m pip install "git+https://github.com/qinpei-dev/permit-mcp.git@v0.5.0"
 python -m pip install mcp-server-time==2026.8.18
 ```
 
