@@ -1,0 +1,9 @@
+{
+  "command": "REPLACE_WITH_ABSOLUTE_PYTHON_PATH",
+  "args": ["-m", "mcp_server_time"],
+  "env": {},
+  "tools": {
+    "get_current_time": "allow",
+    "convert_time": "review"
+  }
+}

@@ -14,6 +14,10 @@ Please report suspected vulnerabilities privately. Use GitHub's **Report a vulne
 
 ## MCP configuration
 
+- For configured upstream stdio servers, only the trusted local operator may set `PERMITMCP_UPSTREAM_CONFIG`. Its absolute executable path, arguments, rules, and selected environment variable names must be reviewed before startup. Installing an upstream server grants its process the local OS user's permissions; PermitMCP does not sandbox it.
+- Keep `PERMITMCP_UPSTREAM_APPROVAL_TOKEN` separate from execution callers. Do not grant `upstream_approve` or this secret to an untrusted agent. This shared secret is role separation, not human identity proof. Pending approval and permits exist only in process memory.
+- Tool input schemas check shape, not all dangerous semantics. PermitMCP does not make a risky upstream tool safe merely by setting its rule to `allow`. Raw upstream stderr is suppressed; tool results are returned to the caller and may themselves contain sensitive data.
+
 - Run the STDIO MCP server only from a trusted local checkout and Python environment. Review the configured `command`, `args`, and working directory before connecting a desktop client.
 - HTTP Bearer tokens do not authenticate the stdio MCP transport. The MCP client and local process must be trusted independently.
 - Store MCP configuration files containing secrets privately. Prefer a local environment variable or private `.env` file for `JEV_API_KEY` rather than putting the key in a configuration file you may share.

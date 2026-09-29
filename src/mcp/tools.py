@@ -1,13 +1,26 @@
 """MCP tool registration backed by the existing JEV and skill components."""
-from mcp.server.fastmcp import FastMCP
+
+import asyncio
+import os
+import secrets
 from pathlib import Path
+
+from mcp.server.fastmcp import FastMCP
 
 from ..agent import ControlledAgentRunner
 from ..composition import create_controlled_agent
+from ..control.models import ActionProposal
 from ..core.decision import DecisionEngine
 from ..jev.client import JEVClient
 from ..skills import SkillExecutor, SkillRegistry, create_default_registry
-from .schemas import AgentRunDecision, AgentRunInput, AgentRunOutput, JEVDecideInput, JEVDecision
+from ..upstream.configured import ConfiguredUpstream
+from .schemas import (
+    AgentRunDecision,
+    AgentRunInput,
+    AgentRunOutput,
+    JEVDecideInput,
+    JEVDecision,
+)
 
 
 def register_tools(
@@ -27,16 +40,22 @@ def register_tools(
         decision = await engine.decide(request.task, request.options)
         if decision.decision not in request.options:
             raise ValueError("Decision engine returned an unavailable option")
-        return JEVDecision(decision=decision.decision, confidence=decision.confidence).model_dump()
+        return JEVDecision(
+            decision=decision.decision, confidence=decision.confidence
+        ).model_dump()
 
     @server.tool()
     async def agent_run(task: str) -> dict:
         """Run JEV skill selection followed by local Skill Executor execution."""
         request = AgentRunInput(task=task)
-        decision = await engine.decide(request.task, [skill.name for skill in registry.list()])
+        decision = await engine.decide(
+            request.task, [skill.name for skill in registry.list()]
+        )
         execution = executor.execute(decision, request.task)
         return AgentRunOutput(
-            decision=AgentRunDecision(skill=decision.decision, confidence=decision.confidence),
+            decision=AgentRunDecision(
+                skill=decision.decision, confidence=decision.confidence
+            ),
             execution=execution,
         ).model_dump()
 
@@ -69,4 +88,60 @@ def create_mcp_server(
     engine = DecisionEngine(client or ClientFactory.from_env())
     controlled_agent = create_controlled_agent(engine, sandbox_root)
     register_tools(server, engine, controlled_agent=controlled_agent)
+    config_path = os.getenv("PERMITMCP_UPSTREAM_CONFIG")
+    if config_path:
+        upstream = ConfiguredUpstream.from_file(config_path)
+        approval_token = os.getenv("PERMITMCP_UPSTREAM_APPROVAL_TOKEN")
+        if not approval_token:
+            raise ValueError(
+                "PERMITMCP_UPSTREAM_APPROVAL_TOKEN is required for configured upstream"
+            )
+        pending = {}
+        init_lock = asyncio.Lock()
+
+        async def ready():
+            async with init_lock:
+                if upstream.chain is None:
+                    await upstream.initialize()
+
+        @server.tool()
+        async def upstream_tools() -> list[str]:
+            """List locally configured and discovered upstream tools."""
+            await ready()
+            return list(upstream.schemas)
+
+        @server.tool()
+        async def upstream_call(tool: str, arguments: dict) -> dict:
+            """Run one configured upstream action through policy and a one-use permit."""
+            await ready()
+            proposal = ActionProposal(
+                tool=tool, arguments=arguments, description="MCP client upstream call"
+            )
+            result = await upstream.chain.run(proposal)
+            if result.status == "review":
+                pending[proposal.action_id] = (proposal, result)
+            return {
+                "status": result.status,
+                "action_id": proposal.action_id if result.status == "review" else None,
+                "result": result.tool_result.output if result.tool_result else None,
+                "error": result.error,
+            }
+
+        @server.tool()
+        async def upstream_approve(action_id: str, approval_token: str) -> dict:
+            """Approve an exact pending upstream action using the separate local approval secret."""
+            if not secrets.compare_digest(
+                approval_token, os.getenv("PERMITMCP_UPSTREAM_APPROVAL_TOKEN", "")
+            ):
+                raise PermissionError("invalid approval token")
+            if action_id not in pending:
+                raise ValueError("unknown pending action")
+            proposal, reviewed = pending.pop(action_id)
+            result = upstream.chain.approve(proposal, reviewed)
+            return {
+                "status": result.status,
+                "result": result.tool_result.output if result.tool_result else None,
+                "error": result.error,
+            }
+
     return server

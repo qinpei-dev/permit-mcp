@@ -1,12 +1,20 @@
 # PermitMCP
 
+<!-- mcp-name: io.github.qinpei-dev/permit-mcp -->
+
+## v0.5.0 release candidate: configured upstream MCP
+
+Install from this checkout with `python -m pip install .`, then run `permit-mcp` from any directory. The new `upstream_tools`, `upstream_call`, and `upstream_approve` MCP tools appear only when the server operator sets `PERMITMCP_UPSTREAM_CONFIG` to a trusted local JSON file and `PERMITMCP_UPSTREAM_APPROVAL_TOKEN` to a separate private secret. The client cannot choose the upstream executable. See [the integration guide](docs/external-upstream.md) for a complete third-party example, policy rules, approval flow, limits, and test command. The older local demos remain available.
+
+No JEV key is needed for configured upstream calls: deterministic policy decides `allow`, `review`, or `deny`. The original decision tools still use the local mock without `JEV_API_KEY`; configure your own key for real TypeSafe requests. PermitMCP does not provide shared keys or quota. This release candidate is locally verified; the package and registry metadata are not published.
+
 [English](README.md) | [中文](README_CN.md)
 
 **Stop AI agents from executing tools unchecked.**
 
 A lightweight execution-control layer for MCP agents with deterministic policies, JEV-backed decisions, human approval, and one-time execution permits.
 
-**Version status:** v0.4.0 includes the reusable `ControlChain` and one permit-gated upstream MCP call to the fixed repository-owned `read_sample` tool. There is no general MCP proxy, arbitrary third-party server support, or operating-system sandbox. The real JEV API was not revalidated for this release.
+**Version status:** v0.5.0rc1 adds selected third-party stdio MCP tools through local operator configuration. The v0.4.0 fixed `read_sample` proof remains available. This is not a general MCP proxy or operating-system sandbox. The real JEV API was not revalidated for this candidate.
 
 ### Controlled Agent Showcase
 
