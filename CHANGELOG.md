@@ -1,8 +1,6 @@
 # Changelog
 
-## Unreleased
-
-## [0.5.0rc1] - 2026-09-29
+## [0.5.0] - 2026-09-29
 
 - Added owner-configured stdio MCP discovery and permit-gated calls for selected external tools, with schema validation and deterministic allow/review/deny rules.
 - Added local-only upstream command configuration, separate approval secret for MCP approval, Python package entry points, and an independent `mcp-server-time` integration test.

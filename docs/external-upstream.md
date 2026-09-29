@@ -1,4 +1,4 @@
-# Configured external stdio MCP server (v0.5.0rc1)
+# Configured external stdio MCP server (v0.5.0)
 
 This path controls selected tools from one trusted local stdio server. It is a bounded integration, not a universal proxy. The owner installs and configures the upstream process; remote MCP calls cannot set a command, arguments, environment, or rules.
 
@@ -7,7 +7,7 @@ This path controls selected tools from one trusted local stdio server. It is a b
 Use Python 3.11 or later:
 
 ```bash
-python -m pip install .
+python -m pip install permit-mcp==0.5.0
 python -m pip install mcp-server-time==2026.8.18
 ```
 

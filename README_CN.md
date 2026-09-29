@@ -1,10 +1,10 @@
 # PermitMCP
 
-## v0.5.0 候选版：连接外部 MCP 服务
+## v0.5.0：连接外部 MCP 服务
 
-在仓库目录运行 `python -m pip install .` 后，可从其他目录启动 `permit-mcp`。仅由本机服务所有者设置 `PERMITMCP_UPSTREAM_CONFIG`（可信 JSON 文件路径）及独立的 `PERMITMCP_UPSTREAM_APPROVAL_TOKEN` 时，才会启用 `upstream_tools`、`upstream_call` 和 `upstream_approve`。客户端不能指定上游可执行程序。完整第三方示例、策略、审批流程、测试步骤与限制见[中文集成指南](docs/external-upstream-cn.md)。旧的本地示例仍可运行。
+在仓库目录运行 `python -m pip install permit-mcp==0.5.0` 后，可从其他目录启动 `permit-mcp`。仅由本机服务所有者设置 `PERMITMCP_UPSTREAM_CONFIG`（可信 JSON 文件路径）及独立的 `PERMITMCP_UPSTREAM_APPROVAL_TOKEN` 时，才会启用 `upstream_tools`、`upstream_call` 和 `upstream_approve`。客户端不能指定上游可执行程序。完整第三方示例、策略、审批流程、测试步骤与限制见[中文集成指南](docs/external-upstream-cn.md)。旧的本地示例仍可运行。
 
-该上游路径使用确定性策略，不需要 JEV 密钥。原有决策工具在缺少 `JEV_API_KEY` 时仍使用本地 mock；真实 TypeSafe 请求需自备密钥及额度。PermitMCP 不提供共享密钥或额度。候选版只经过本地验证，尚未发布到 PyPI 或 MCP Registry。
+该上游路径使用确定性策略，不需要 JEV 密钥。原有决策工具在缺少 `JEV_API_KEY` 时仍使用本地 mock；真实 TypeSafe 请求需自备密钥及额度。PermitMCP 不提供共享密钥或额度。外部 MCP 集成已通过本地独立服务验证。
 
 [English](README.md) | [中文](README_CN.md)
 
@@ -12,7 +12,7 @@
 
 一个面向 MCP Agent 的轻量级执行控制层，通过确定性策略、JEV 决策、人工审批和一次性 Execution Permit 控制真实工具执行。
 
-**版本状态：** v0.5.0rc1 支持通过本机所有者配置接入所选第三方 stdio MCP 工具；v0.4.0 的固定 `read_sample` 示例继续保留。不支持通用 MCP Proxy 或操作系统级沙箱。候选版未重新验证真实 JEV API。
+**版本状态：** v0.5.0 支持通过本机所有者配置接入所选第三方 stdio MCP 工具；v0.4.0 的固定 `read_sample` 示例继续保留。不支持通用 MCP Proxy 或操作系统级沙箱。本次未重新验证真实 JEV API。
 
 ### Controlled Agent Showcase
 

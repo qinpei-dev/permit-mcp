@@ -1,9 +1,9 @@
-# 配置第三方 stdio MCP 服务（v0.5.0rc1）
+# 配置第三方 stdio MCP 服务（v0.5.0）
 
 PermitMCP 通过本机所有者选定的一个 stdio 服务连接外部工具。安装命令：
 
 ```bash
-python -m pip install .
+python -m pip install permit-mcp==0.5.0
 python -m pip install mcp-server-time==2026.8.18
 ```
 
